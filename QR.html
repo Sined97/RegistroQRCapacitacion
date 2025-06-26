@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Lector QR con SharePoint</title>
+<script src="https://unpkg.com/html5-qrcode"></script>
+<style>
+
+    body { font-family: Arial, sans-serif; background: #f4f4f4; text-align: center; padding: 20px; }
+
+    #reader { width: 300px; margin: auto; }
+
+    input, button {
+
+      padding: 10px;
+
+      font-size: 16px;
+
+      margin-top: 15px;
+
+      border-radius: 5px;
+
+      width: 80%;
+
+      max-width: 300px;
+
+    }
+
+    button {
+
+      background-color: #0078d4;
+
+      color: white;
+
+      border: none;
+
+      cursor: pointer;
+
+    }
+
+    .result {
+
+      margin-top: 20px;
+
+      background: white;
+
+      padding: 10px;
+
+      border-radius: 8px;
+
+      box-shadow: 0 0 5px rgba(0,0,0,0.1);
+
+    }
+</style>
+</head>
+<body>
+<h1>📷 Lector QR</h1>
+<input type="text" id="curso" placeholder="Escribe el nombre del curso">
+<div id="reader"></div>
+<div class="result">
+<strong>Último resultado:</strong>
+<p id="qr-result">Esperando escaneo...</p>
+<p id="status"></p>
+</div>
+<script>
+
+    const qrResult = document.getElementById("qr-result");
+
+    const status = document.getElementById("status");
+
+    function guardarEnSharePoint(qr, curso) {
+
+      fetch("https://prod-xx.westus.logic.azure.com:.../invoke", { // ⬅️ Pon aquí tu URL de Power Automate
+
+        method: "POST",
+
+        headers: { "Content-Type": "application/json" },
+
+        body: JSON.stringify({
+
+          qr_result: qr,
+
+          curso: curso
+
+        })
+
+      })
+
+      .then(response => response.text())
+
+      .then(result => {
+
+        status.textContent = "✅ Registrado en SharePoint correctamente";
+
+      })
+
+      .catch(error => {
+
+        console.error("Error:", error);
+
+        status.textContent = "❌ Error al guardar en SharePoint";
+
+      });
+
+    }
+
+    function onScanSuccess(decodedText) {
+
+      const curso = document.getElementById("curso").value.trim();
+
+      if (!curso) {
+
+        alert("⚠️ Escribe el nombre del curso antes de escanear.");
+
+        return;
+
+      }
+
+      qrResult.textContent = decodedText;
+
+      guardarEnSharePoint(decodedText, curso);
+
+    }
+
+    const html5QrCode = new Html5Qrcode("reader");
+
+    html5QrCode.start(
+
+      { facingMode: "environment" },
+
+      { fps: 10, qrbox: 250 },
+
+      onScanSuccess
+
+    ).catch(err => {
+
+      console.error("Error al iniciar cámara:", err);
+
+    });
+</script>
+</body>
+</html>
+ 
