@@ -6,23 +6,85 @@
 <script src="https://unpkg.com/html5-qrcode"></script>
 <style>
 
-    body { font-family: Arial, sans-serif; background: #f4f4f4; text-align: center; padding: 20px; }
+    body {
 
-    #reader { width: 300px; margin: auto; }
+      font-family: Arial, sans-serif;
+
+      background: #f4f4f4;
+
+      margin: 0;
+
+      padding: 0;
+
+    }
+
+    /* Header con tres logos */
+
+    header {
+
+      display: flex;
+
+      justify-content: space-between;
+
+      align-items: center;
+
+      background-color: #ffffff;
+
+      padding: 10px 20px;
+
+      border-bottom: 1px solid #ddd;
+
+    }
+
+    .logo {
+
+      height: 50px;
+
+      width: auto;
+
+      object-fit: contain;
+
+    }
+
+    main {
+
+      text-align: center;
+
+      padding: 30px 20px;
+
+    }
+
+    #reader {
+
+      width: 320px;
+
+      margin: 20px auto;
+
+    }
 
     input, button {
 
-      padding: 10px;
+      display: block;
+
+      margin: 20px auto;
+
+      padding: 12px;
 
       font-size: 16px;
 
-      margin-top: 15px;
-
       border-radius: 5px;
 
-      width: 80%;
+      width: 90%;
 
-      max-width: 300px;
+      max-width: 350px;
+
+      box-sizing: border-box;
+
+    }
+
+    input {
+
+      border: 1px solid #ccc;
 
     }
 
@@ -40,41 +102,72 @@
 
     .result {
 
-      margin-top: 20px;
+      margin-top: 30px;
 
       background: white;
 
-      padding: 10px;
+      padding: 20px;
 
       border-radius: 8px;
 
       box-shadow: 0 0 5px rgba(0,0,0,0.1);
 
+      max-width: 400px;
+
+      margin-left: auto;
+
+      margin-right: auto;
+
+    }
+
+    .result p {
+
+      margin: 10px 0;
+
+      font-size: 16px;
+
     }
 </style>
 </head>
 <body>
-<h1>📷 Lector QR</h1>
+<!-- Header con 3 logos -->
+<header>
+<img src="activamente logo_color.png" alt="Logo Izquierdo" class="logo">
+<img src="Logo JDV-SC_2023-02-03.png" alt="Logo Central" class="logo">
+<img src="LOGO CAPACITACIÓN Y DESARROLLO VARIANTES-02.png" alt="Logo Derecho" class="logo">
+</header>
+<main>
+<h1>📷 Lector de Códigos QR</h1>
 <input type="text" id="curso" placeholder="Escribe el nombre del curso">
 <div id="reader"></div>
 <div class="result">
-<strong>Último resultado:</strong>
+<strong>Último resultado escaneado:</strong>
 <p id="qr-result">Esperando escaneo...</p>
 <p id="status"></p>
 </div>
+<button onclick="reiniciarEscaneo()">🔄 Escanear otro código</button>
+</main>
 <script>
 
     const qrResult = document.getElementById("qr-result");
 
     const status = document.getElementById("status");
 
+    const cursoInput = document.getElementById("curso");
+
+    let html5QrCode;
+
     function guardarEnSharePoint(qr, curso) {
 
-      fetch("https://prod-185.westus.logic.azure.com:443/workflows/fa2cc4761980484bad2314f77eee6959/triggers/manual/paths/invoke?api-version=2016-06-01&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=Yw4yWoFFN4ltdmRQynF54rySOIp-qgFKCCfybkSjkdY", { // ⬅️ Pon aquí tu URL de Power Automate
+      fetch("https://prod-185.westus.logic.azure.com:443/workflows/fa2cc4761980484bad2314f77eee6959/triggers/manual/paths/invoke?api-version=2016-06-01&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=Yw4yWoFFN4ltdmRQynF54rySOIp-qgFKCCfybkSjkdY", { // ⬅️ Reemplaza con tu URL de Power Automate
 
         method: "POST",
 
-        headers: { "Content-Type": "application/json" },
+        headers: {
+
+          "Content-Type": "application/json"
+
+        },
 
         body: JSON.stringify({
 
@@ -106,7 +199,7 @@
 
     function onScanSuccess(decodedText) {
 
-      const curso = document.getElementById("curso").value.trim();
+      const curso = cursoInput.value.trim();
 
       if (!curso) {
 
@@ -120,21 +213,55 @@
 
       guardarEnSharePoint(decodedText, curso);
 
+      // Detener escaneo
+
+      html5QrCode.stop()
+
+        .then(() => {
+
+          console.log("Escaneo detenido.");
+
+        })
+
+        .catch(err => {
+
+          console.error("Error al detener escaneo:", err);
+
+        });
+
     }
 
-    const html5QrCode = new Html5Qrcode("reader");
+    function reiniciarEscaneo() {
 
-    html5QrCode.start(
+      status.textContent = "";
 
-      { facingMode: "environment" },
+      qrResult.textContent = "Esperando escaneo...";
 
-      { fps: 10, qrbox: 250 },
+      html5QrCode.start(
 
-      onScanSuccess
+        { facingMode: "environment" },
 
-    ).catch(err => {
+        { fps: 10, qrbox: 250 },
 
-      console.error("Error al iniciar cámara:", err);
+        onScanSuccess
+
+      ).then(() => {
+
+        console.log("Escaneo reiniciado.");
+
+      }).catch(err => {
+
+        console.error("Error al reiniciar:", err);
+
+      });
+
+    }
+
+    window.addEventListener("load", () => {
+
+      html5QrCode = new Html5Qrcode("reader");
+
+      reiniciarEscaneo(); // Iniciar escaneo al cargar
 
     });
 </script>
